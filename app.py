@@ -4,7 +4,15 @@ import os
 from datetime import datetime
 
 # הגדרת שם הקובץ לשמירת הנתונים
-DATA_FILE = "segel_dining_hall_menus.json"
+import streamlit as st
+import json
+import os
+from datetime import datetime
+from pathlib import Path
+
+# תיקון שגיאת ההרשאה: שמירת הקובץ בתיקיית הבית של המשתמש במחשב
+HOME_DIR = Path.home()
+DATA_FILE = HOME_DIR / "segel_dining_hall_menus.json"
 
 def load_data():
     if os.path.exists(DATA_FILE):
@@ -13,9 +21,9 @@ def load_data():
     return {}
 
 def save_data(data):
+    # כאן מתבצעת השמירה הבטוחה
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
-
 menus_db = load_data()
 
 # עיצוב בסיסי ליישור לימין והתאמה לחדר אוכל סגל
