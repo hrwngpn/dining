@@ -9,7 +9,111 @@ HOME_DIR = Path.home()
 DATA_FILE = HOME_DIR / "segel_dining_hall_menus.json"
 BANK_FILE = HOME_DIR / "segel_dish_bank.json"
 
-# פונקציות טעינה ושמירה לתפריט היומי
+# תפריט בסיס מוכן מראש למטבח הסגל (מוזן אוטומטית אם הבנק ריק)
+DEFAULT_BANK = {
+    "salads": {
+        "סלט ירקות ישראלי": {
+            "products": [
+                {"prod_name": "עגבנייה", "action": "🔪 לחתוך", "grams_per_person": 50.0},
+                {"prod_name": "מלפפון", "action": "🔪 לחתוך", "grams_per_person": 50.0},
+                {"prod_name": "בצל סגול", "action": "🔄 לקלף ולחתוך", "grams_per_person": 15.0},
+                {"prod_name": "פטרוזיליה", "action": "🧼 לשטוף בלבד", "grams_per_person": 5.0}
+            ],
+            "instructions": "לחתוך את הירקות לקוביות קטנות ואחידות. לתבל בשמן זית, מיץ לימון טרי ומלח ממש לפני ההגשה כדי למנוע נוזלים."
+        },
+        "סלט כרוב וגזר במיונז": {
+            "products": [
+                {"prod_name": "כרוב לבן", "action": "🔪 לחתוך", "grams_per_person": 60.0},
+                {"prod_name": "גזר", "action": "🔄 לקלף ולחתוך", "grams_per_person": 20.0},
+                {"prod_name": "מיונז", "action": "➖ ללא פעולה", "grams_per_person": 15.0}
+            ],
+            "instructions": "לקצוץ את הכרוב דק, לגרד את הגזר בפומפייה. לערבב היטב עם מיונז, קורט סוכר, מלח ומעט חומץ. להשהות שעה במקרר לספיגת טעמים."
+        },
+        "סלט חסה וקרוטונים": {
+            "products": [
+                {"prod_name": "חסה ערבית", "action": "🧼 לשטוף בלבד", "grams_per_person": 50.0},
+                {"prod_name": "קרוטונים", "action": "➖ ללא פעולה", "grams_per_person": 15.0},
+                {"prod_name": "רוטב שום", "action": "➖ ללא פעולה", "grams_per_person": 20.0}
+            ],
+            "instructions": "לשטוף ולייבש את החסה היטב, לקרוע לחתיכות בינוניות. להוסיף את הקרוטונים והרוטב ממש דקה לפני הגשת הסגל."
+        },
+        "סלט חומוס ביתי": {
+            "products": [
+                {"prod_name": "גרגרי חומוס מבושלים", "action": "🧼 לשטוף בלבד", "grams_per_person": 60.0},
+                {"prod_name": "טחינה גולמית", "action": "➖ ללא פעולה", "grams_per_person": 20.0},
+                {"prod_name": "שום כתוש", "action": "🥔 לקלף", "grams_per_person": 2.0}
+            ],
+            "instructions": "לטחון את גרגרי החומוס החמים עם הטחינה, השום, מיץ לימון ומים קרים עד לקבלת מרקם חלק. להגיש עם זילוף שמן זית ופפריקה."
+        },
+        "סלט טחינה ירוקה": {
+            "products": [
+                {"prod_name": "טחינה גולמית", "action": "➖ ללא פעולה", "grams_per_person": 40.0},
+                {"prod_name": "פטרוזיליה וכלוסברה", "action": "🧼 לשטוף בלבד", "grams_per_person": 10.0},
+                {"prod_name": "מיץ לימון", "action": "➖ ללא פעולה", "grams_per_person": 15.0}
+            ],
+            "instructions": "לערבב טחינה עם מים קרים ולימון. לטחון פנימה את עשבי התיבול לקבלת צבע ירוק בוהק."
+        }
+    },
+    "mains": {
+        "כרעי עוף בתנור עם פפריקה": {
+            "products": [
+                {"prod_name": "כרעי עוף טרי", "action": "🧼 לשטוף בלבד", "grams_per_person": 250.0},
+                {"prod_name": "שמן קנולה", "action": "➖ ללא פעולה", "grams_per_person": 10.0},
+                {"prod_name": "תבלין פפריקה וגריל", "action": "➖ ללא פעולה", "grams_per_person": 5.0}
+            ],
+            "instructions": "לערבב את השמן עם התבלינים, לעסות את העוף היטב. לסדר בתבניות עמוקות, לכסות בנייר כסף ולאפות שעה ב-180 מעלות. להסיר כיסוי ל-20 דקות נוספות להשחמה."
+        },
+        "קציצות בקר ברוטב עגבניות": {
+            "products": [
+                {"prod_name": "בשר בקר טחון", "action": "➖ ללא פעולה", "grams_per_person": 160.0},
+                {"prod_name": "רוטב עגבניות מוכן", "action": "➖ ללא פעולה", "grams_per_person": 80.0},
+                {"prod_name": "בצל וירק לקציצות", "action": "🔄 לקלף ולחתוך", "grams_per_person": 25.0}
+            ],
+            "instructions": "לערבב את הבשר עם הבצל והירק הקצוצים, ליצור קציצות אחידות. לבשל בתוך רוטב עגבניות מבעבע על אש קטנה במשך כ-40 דקות."
+        },
+        "פילה אמנון בעשבי תיבול": {
+            "products": [
+                {"prod_name": "דג פילה אמנון", "action": "🧼 לשטוף בלבד", "grams_per_person": 150.0},
+                {"prod_name": "שמן זית", "action": "➖ ללא פעולה", "grams_per_person": 8.0},
+                {"prod_name": "שום וכוסברה קצוצה", "action": "🔄 לקלף ולחתוך", "grams_per_person": 12.0}
+            ],
+            "instructions": "למרוח את הדגים בשמן זית, שום כתוש וכוסברה. לאפות בתנור חם מאוד (200 מעלות) במשך 12-15 דקות בלבד שלא יתייבש."
+        }
+    },
+    "carb": {
+        "אורז לבן אחד-אחד": {
+            "products": [
+                {"prod_name": "אורז פרסי/יסמין", "action": "🧼 לשטוף בלבד", "grams_per_person": 70.0},
+                {"prod_name": "שמן קנולה", "action": "➖ ללא פעולה", "grams_per_person": 8.0}
+            ],
+            "instructions": "לטגן את האורז בשמן כ-3 דקות, להוסיף מים רותחים (ביחס של 1.5 כוסות מים על כל כוס אורז) ומלח. לבשל על אש קטנה בסיר מכוסה 18 דקות, להשאיר סגור עוד 10 דקות."
+        },
+        "תפוחי אדמה אפויים (סירות)": {
+            "products": [
+                {"prod_name": "תפוח אדמה", "action": "🔄 לקלף ולחתוך", "grams_per_person": 180.0},
+                {"prod_name": "שמן ומלח גס", "action": "➖ ללא פעולה", "grams_per_person": 10.0}
+            ],
+            "instructions": "לחתוך את תפוחי האדמה לפלחים (סירות), לערבב עם שמן, מלח גס ומעט רוזמרין. לאפות ב-200 מעלות עד שרך מבפנים וקריספי מבחוץ."
+        },
+        "פתיתים עם בצל מטוגן": {
+            "products": [
+                {"prod_name": "פתיתים אפויים", "action": "➖ ללא פעולה", "grams_per_person": 70.0},
+                {"prod_name": "בצל", "action": "🔄 לקלף ולחתוך", "grams_per_person": 20.0}
+            ],
+            "instructions": "לטגן את הבצל הקצוץ עד להזהבה עמוקה. להוסיף את הפתיתים, לטגן דקה, להוסיף מים רותחים ולבשל לפי הוראות היצרן."
+        }
+    },
+    "dessert": {
+        "סלט פירות העונה": {
+            "products": [
+                {"prod_name": "פירות מעורבים (תפוח, תפוז, בננה)", "action": "🔄 לקלף ולחתוך", "grams_per_person": 100.0}
+            ],
+            "instructions": "לחתוך את כל הפירות לקוביות קטנות, לערבב עם מעט מיץ תפוזים טבעי וסוכר וניל. להגיש קר בקעריות אישיות לסגל."
+        }
+    }
+}
+
+# פונקציות טעינה ושמירה
 def load_data():
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -20,12 +124,15 @@ def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-# פונקציות טעינה ושמירה לבנק המנות (הזיכרון של האפליקציה)
 def load_bank():
-    if os.path.exists(BANK_FILE):
-        with open(BANK_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {}
+    # אם הקובץ לא קיים, נייצר אותו אוטומטית עם תפריט הבסיס המוכן
+    if not os.path.exists(BANK_FILE):
+        with open(BANK_FILE, "w", encoding="utf-8") as f:
+            json.dump(DEFAULT_BANK, f, ensure_ascii=False, indent=4)
+        return DEFAULT_BANK
+    
+    with open(BANK_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 def save_to_bank(category_key, name, products, instructions):
     if not name or name.strip() == "":
@@ -34,7 +141,6 @@ def save_to_bank(category_key, name, products, instructions):
     if category_key not in bank:
         bank[category_key] = {}
     
-    # שמירת המנה עם כל הפרודוקטים והוראות ההכנה שלה
     bank[category_key][name.strip()] = {
         "products": products,
         "instructions": instructions
@@ -42,11 +148,11 @@ def save_to_bank(category_key, name, products, instructions):
     with open(BANK_FILE, "w", encoding="utf-8") as f:
         json.dump(bank, f, ensure_ascii=False, indent=4)
 
-# טעינת בסיסי הנתונים
+# טעינת המידע
 menus_db = load_data()
 dish_bank = load_bank()
 
-# עיצוב בסיסי ליישור לימין
+# עיצוב בסיסי בעברית
 st.markdown("""
     <style>
     .reportview-container .main .block-container{ max-width: 1050px; }
@@ -57,8 +163,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("⭐ מערכת חדר אוכל סגל - עם זיכרון מנות")
-st.write("הקלד מנה חדשה או בחר מתוך מנות קיימות שנשמרו בעבר כדי למלא פרודוקטים אוטומטית")
+st.title("⭐ מערכת חדר אוכל סגל - תפריט בסיס מוכן")
+st.write("בחר מתוך רשימת המנות המוכנות מראש, או הקלד מנה חדשה כדי להוסיף אותה לבנק")
 
 # בחירת תאריך
 selected_date = st.date_input("בחר תאריך לתפריט:", datetime.today()).strftime("%Y-%m-%d")
@@ -67,27 +173,21 @@ meals = ["ארוחת בוקר", "ארוחת צהריים", "ארוחת ערב"]
 current_menu = menus_db.get(selected_date, {})
 updated_menu = {}
 
-# פונקציה לייצור פריט מזון חכם עם זיכרון מהבנק
 def render_food_item(meal_data, meal_name, category_key, item_label, item_index):
     category_data = meal_data.get(category_key, [])
     while len(category_data) <= item_index:
         category_data.append({"name": "", "item_diners": 40, "products": [], "instructions": ""})
         
     existing_item = category_data[item_index]
-    
-    # שליפת מנות שכבר קיימות בבנק עבור קטגוריה זו (למשל סלטים או עיקריות)
     existing_bank_dishes = list(dish_bank.get(category_key, {}).keys())
     
-    # הכנת רשימת האפשרויות לבחירה: "חדש/הקלדה חופשית" או המנות מהבנק
     select_options = ["➕ הקלד מנה חדשה בתיבה למטה..."] + existing_bank_dishes
     
-    # קביעת ברירת המחדל של תיבת הבחירה
     saved_name = existing_item.get("name", "")
     default_index = 0
     if saved_name in existing_bank_dishes:
         default_index = select_options.index(saved_name)
     
-    # 1. תיבת בחירה ממנות עבר
     selected_from_box = st.selectbox(
         f"בחר {item_label} מוכן (או הקלד חדש):",
         options=select_options,
@@ -95,35 +195,29 @@ def render_food_item(meal_data, meal_name, category_key, item_label, item_index)
         key=f"{selected_date}_{meal_name}_{category_key}_select_{item_index}"
     )
     
-    # 2. שדה קלט טקסט - מופעל אם בחרו "הקלד מנה חדשה" או מציג את הבחירה
     if selected_from_box == "➕ הקלד מנה חדשה בתיבה למטה...":
-        name = st.text_input(f"שם ה{item_label} החדש:", value="", key=f"{selected_date}_{meal_name}_{category_key}_name_{item_index}", placeholder="למשל: סלט כרוב אסיאתי")
+        name = st.text_input(f"שם ה{item_label} החדש:", value="", key=f"{selected_date}_{meal_name}_{category_key}_name_{item_index}", placeholder="הקלד שם כאן...")
     else:
         name = selected_from_box
-        st.info(f"📋 נבחרה מנה מוכנה: **{name}** (הפרודוקטים וההוראות נטענו בהצלחה)")
+        st.info(f"📋 המנה **{name}** נטענה עם פרודוקטים מוכנים.")
 
     updated_products = []
     instructions = ""
     item_diners = existing_item.get("item_diners", 40)
     
     if name:
-        # בדיקה האם המנה קיימת בבנק כדי למשוך את הפרודוקטים שלה כברירת מחדל
         bank_dish_data = dish_bank.get(category_key, {}).get(name, {})
         
         with st.expander(f"📝 פרודוקטים ומחשבון כמויות עבור: {name}"):
-            
             item_diners = st.number_input(
                 f"👥 כמה סועדי סגל יאכלו מנת '{name}'?", 
-                min_value=1, 
-                value=int(existing_item.get("item_diners", 40)), 
-                step=5,
+                min_value=1, value=int(existing_item.get("item_diners", 40)), step=5,
                 key=f"{selected_date}_{meal_name}_{category_key}_{item_index}_diners"
             )
             
             st.markdown("---")
             st.markdown("**🍎 רשימת פרודוקטים וצורת הכנה:**")
             
-            # קביעה מאיפה לקחת את הפרודוקטים: מהתפריט השמור של היום, או מבנק המנות הכללי
             if existing_item.get("name") == name:
                 source_products = existing_item.get("products", [])
             else:
@@ -159,20 +253,13 @@ def render_food_item(meal_data, meal_name, category_key, item_label, item_index)
                     })
             
             st.write("")
-            
-            # קביעת הערות הכנה
             if existing_item.get("name") == name:
                 default_instructions = existing_item.get("instructions", "")
             else:
                 default_instructions = bank_dish_data.get("instructions", "")
                 
-            instructions = st.text_area(
-                "🥣 הוראות הכנה ועבודה למטבח:", 
-                value=default_instructions, 
-                key=f"{selected_date}_{meal_name}_{category_key}_inst_{item_index}"
-            )
+            instructions = st.text_area("🥣 הוראות הכנה ועבודה למטבח:", value=default_instructions, key=f"{selected_date}_{meal_name}_{category_key}_inst_{item_index}")
             
-            # שמירה אוטומטית לבנק המנות ברגע שמקלידים או מעדכנים
             if len(updated_products) > 0:
                 save_to_bank(category_key, name, updated_products, instructions)
             
@@ -216,7 +303,7 @@ for count, meal_name in enumerate(meals):
 
 st.divider()
 
-# כפתורי שמירה ודוח
+# כפתורים
 col_save, col_report = st.columns(2)
 with col_save:
     if st.button("💾 שמור תפריט סגל ליום זה", use_container_width=True):
